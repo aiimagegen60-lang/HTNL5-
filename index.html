@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Play 2048 Game Online</title>
+
+<meta name="description" content="Play 2048 puzzle game online for free on mobile, tablet and desktop. Swipe tiles to reach 2048.">
+
+<style>
+
+body{
+font-family:Arial;
+background:#faf8ef;
+text-align:center;
+margin:0;
+}
+
+h1{
+margin-top:20px;
+}
+
+.container{
+max-width:500px;
+margin:auto;
+}
+
+.scoreboard{
+display:flex;
+justify-content:center;
+gap:15px;
+margin-top:10px;
+}
+
+.scorebox{
+background:#bbada0;
+color:white;
+padding:10px 20px;
+border-radius:6px;
+font-weight:bold;
+}
+
+#game{
+width:90vw;
+max-width:420px;
+height:90vw;
+max-height:420px;
+margin:20px auto;
+background:#bbada0;
+padding:10px;
+border-radius:10px;
+display:grid;
+grid-template-columns:repeat(4,1fr);
+grid-gap:10px;
+}
+
+.tile{
+background:#cdc1b4;
+border-radius:6px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:28px;
+font-weight:bold;
+transition:all .15s;
+}
+
+.tile[data-value="2"]{background:#eee4da;}
+.tile[data-value="4"]{background:#ede0c8;}
+.tile[data-value="8"]{background:#f2b179;color:#fff;}
+.tile[data-value="16"]{background:#f59563;color:#fff;}
+.tile[data-value="32"]{background:#f67c5f;color:#fff;}
+.tile[data-value="64"]{background:#f65e3b;color:#fff;}
+.tile[data-value="128"]{background:#edcf72;color:#fff;}
+.tile[data-value="256"]{background:#edcc61;color:#fff;}
+.tile[data-value="512"]{background:#edc850;color:#fff;}
+.tile[data-value="1024"]{background:#edc53f;color:#fff;}
+.tile[data-value="2048"]{background:#edc22e;color:#fff;}
+
+button{
+padding:10px 20px;
+background:#8f7a66;
+border:none;
+color:white;
+border-radius:5px;
+font-size:16px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.popup-box{
+background:white;
+padding:30px;
+border-radius:10px;
+text-align:center;
+}
+
+.ad-top{
+margin-top:10px;
+}
+
+.ad-bottom{
+margin-top:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>2048 Game</h1>
+
+<div class="scoreboard">
+<div class="scorebox">Score <span id="score">0</span></div>
+<div class="scorebox">Best <span id="best">0</span></div>
+</div>
+
+<button onclick="restart()">New Game</button>
+
+<div class="ad-top">
+<!-- AD AREA -->
+</div>
+
+<div id="game"></div>
+
+<div class="ad-bottom">
+<!-- AD AREA -->
+</div>
+
+</div>
+
+<div class="popup" id="gameover">
+<div class="popup-box">
+<h2>Game Over</h2>
+<button onclick="restart()">Play Again</button>
+</div>
+</div>
+
+<script>
+
+let board=[];
+let score=0;
+let bestScore=localStorage.getItem("best2048") || 0;
+
+document.getElementById("best").innerText=bestScore;
+
+function init(){
+
+board=[
+[0,0,0,0],
+[0,0,0,0],
+[0,0,0,0],
+[0,0,0,0]
+];
+
+score=0;
+
+addTile();
+addTile();
+
+draw();
+
+}
+
+function addTile(){
+
+let empty=[];
+
+for(let r=0;r<4;r++){
+for(let c=0;c<4;c++){
+
+if(board[r][c]==0){
+empty.push({r,c});
+}
+
+}
+}
+
+if(empty.length==0) return;
+
+let spot=empty[Math.floor(Math.random()*empty.length)];
+
+board[spot.r][spot.c]=Math.random()<0.9?2:4;
+
+}
+
+function draw(){
+
+let game=document.getElementById("game");
+game.innerHTML="";
+
+for(let r=0;r<4;r++){
+for(let c=0;c<4;c++){
+
+let tile=document.createElement("div");
+tile.className="tile";
+
+if(board[r][c]!==0){
+tile.innerText=board[r][c];
+tile.setAttribute("data-value",board[r][c]);
+}
+
+game.appendChild(tile);
+
+}
+}
+
+document.getElementById("score").innerText=score;
+
+if(score>bestScore){
+
+bestScore=score;
+
+localStorage.setItem("best2048",bestScore);
+
+document.getElementById("best").innerText=bestScore;
+
+}
+
+if(checkGameOver()){
+document.getElementById("gameover").style.display="flex";
+}
+
+}
+
+function slide(row){
+
+row=row.filter(v=>v);
+
+for(let i=0;i<row.length-1;i++){
+
+if(row[i]==row[i+1]){
+
+row[i]*=2;
+score+=row[i];
+row[i+1]=0;
+
+}
+
+}
+
+row=row.filter(v=>v);
+
+while(row.length<4){
+row.push(0);
+}
+
+return row;
+
+}
+
+function moveLeft(){
+for(let r=0;r<4;r++){
+board[r]=slide(board[r]);
+}
+}
+
+function moveRight(){
+
+for(let r=0;r<4;r++){
+
+board[r].reverse();
+board[r]=slide(board[r]);
+board[r].reverse();
+
+}
+
+}
+
+function moveUp(){
+
+for(let c=0;c<4;c++){
+
+let col=[board[0][c],board[1][c],board[2][c],board[3][c]];
+
+col=slide(col);
+
+for(let r=0;r<4;r++){
+board[r][c]=col[r];
+}
+
+}
+
+}
+
+function moveDown(){
+
+for(let c=0;c<4;c++){
+
+let col=[board[0][c],board[1][c],board[2][c],board[3][c]];
+
+col.reverse();
+
+col=slide(col);
+
+col.reverse();
+
+for(let r=0;r<4;r++){
+board[r][c]=col[r];
+}
+
+}
+
+}
+
+function move(dir){
+
+switch(dir){
+
+case "left":
+moveLeft();
+break;
+
+case "right":
+moveRight();
+break;
+
+case "up":
+moveUp();
+break;
+
+case "down":
+moveDown();
+break;
+
+}
+
+addTile();
+draw();
+
+}
+
+document.addEventListener("keydown",e=>{
+
+switch(e.key){
+
+case "ArrowLeft":
+move("left");
+break;
+
+case "ArrowRight":
+move("right");
+break;
+
+case "ArrowUp":
+move("up");
+break;
+
+case "ArrowDown":
+move("down");
+break;
+
+}
+
+});
+
+let startX,startY;
+
+document.addEventListener("touchstart",e=>{
+
+startX=e.touches[0].clientX;
+startY=e.touches[0].clientY;
+
+});
+
+document.addEventListener("touchend",e=>{
+
+let endX=e.changedTouches[0].clientX;
+let endY=e.changedTouches[0].clientY;
+
+let dx=endX-startX;
+let dy=endY-startY;
+
+if(Math.abs(dx)>Math.abs(dy)){
+
+if(dx>30) move("right");
+else if(dx<-30) move("left");
+
+}else{
+
+if(dy>30) move("down");
+else if(dy<-30) move("up");
+
+}
+
+});
+
+function checkGameOver(){
+
+for(let r=0;r<4;r++){
+for(let c=0;c<4;c++){
+
+if(board[r][c]==0) return false;
+
+}
+}
+
+return true;
+
+}
+
+function restart(){
+
+document.getElementById("gameover").style.display="none";
+
+init();
+
+}
+
+init();
+
+</script>
+
+</body>
+</html>
